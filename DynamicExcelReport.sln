@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.12.35527.113 d17.12
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DER.Utility", "DER.Utility\DER.Utility.csproj", "{73CB1589-0E4A-412F-AF7A-549BB31750D5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DER.Console", "DER.Console\DER.Console.csproj", "{F4EAB734-1007-4A60-9F08-DF68DFC06ACB}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{73CB1589-0E4A-412F-AF7A-549BB31750D5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{73CB1589-0E4A-412F-AF7A-549BB31750D5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{73CB1589-0E4A-412F-AF7A-549BB31750D5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{73CB1589-0E4A-412F-AF7A-549BB31750D5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F4EAB734-1007-4A60-9F08-DF68DFC06ACB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F4EAB734-1007-4A60-9F08-DF68DFC06ACB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F4EAB734-1007-4A60-9F08-DF68DFC06ACB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F4EAB734-1007-4A60-9F08-DF68DFC06ACB}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
