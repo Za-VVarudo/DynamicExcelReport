@@ -1,4 +1,5 @@
 ﻿using DER.Utility.Constants;
+using DER.Utility.Extensions;
 using DER.Utility.Models;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
@@ -115,7 +116,7 @@ namespace DER.Utility.Converters
             if (colorType.Theme != null)
             {
                 var themeColor = (DocumentFormat.OpenXml.Drawing.Color2Type)themePart.Theme.ThemeElements.ColorScheme.ChildElements[(int)colorType.Theme.Value];
-                return themeColor.RgbColorModelHex?.Val.Value;
+                return themeColor.RgbColorModelHex.ToRGBA();
             }
             if (colorType.Indexed != null)
             {
@@ -317,7 +318,10 @@ namespace DER.Utility.Converters
             if (cellStyle.FillForegroundColor != null || cellStyle.FillBackgroundColor != null)
             {
                 var fill = new Fill();
-                var patternFill = new PatternFill();
+                var patternFill = new PatternFill
+                {
+                    PatternType = PatternValues.Solid
+                };
 
                 if (!string.IsNullOrEmpty(cellStyle.FillForegroundColor))
                 {
@@ -334,8 +338,6 @@ namespace DER.Utility.Converters
                         Rgb = cellStyle.FillBackgroundColor
                     };
                 }
-
-                patternFill.PatternType = PatternValues.Solid;
                 fill.AppendChild(patternFill);
 
                 // Add fill to stylesheet and reference it
