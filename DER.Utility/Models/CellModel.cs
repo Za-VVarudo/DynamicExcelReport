@@ -2,13 +2,10 @@
 
 namespace DER.Utility.Models
 {
-    public class ExcelTemplate
-    {
-        [JsonProperty("Status Report")]
-        public Dictionary<string, CellData> StatusReport { get; set; }
-    }
+    public class WorkbookModel : Dictionary<string, SheetModel> { }
+    public class SheetModel : Dictionary<string, CellDataModel> { }
 
-    public class CellData
+    public class CellDataModel
     {
         [JsonProperty("value")]
         public string Value { get; set; }
@@ -17,10 +14,10 @@ namespace DER.Utility.Models
         public string MergedRange { get; set; }
 
         [JsonProperty("style")]
-        public CellStyle Style { get; set; }
+        public CellStyleModel Style { get; set; }
     }
 
-    public class CellStyle
+    public class CellStyleModel
     {
         [JsonProperty("fontName")]
         public string FontName { get; set; }
