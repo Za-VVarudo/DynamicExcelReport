@@ -13,12 +13,7 @@ namespace DER.Utility.Models
         [JsonProperty("mergedRange")]
         public string MergedRange { get; set; }
 
-        [JsonProperty("style")]
-        public CellStyleModel Style { get; set; }
-    }
-
-    public class CellStyleModel
-    {
+        // Flattened style properties
         [JsonProperty("fontName")]
         public string FontName { get; set; }
 
@@ -40,10 +35,49 @@ namespace DER.Utility.Models
         [JsonProperty("fillBackgroundColor")]
         public string FillBackgroundColor { get; set; }
 
+        [JsonProperty("fillPatternType")]
+        public int PatternType { get; set; }
+
         [JsonProperty("horizontalAlign")]
         public string HorizontalAlign { get; set; }
 
         [JsonProperty("verticalAlign")]
         public string VerticalAlign { get; set; }
+
+        [JsonProperty("borderTopStyle")]
+        public int? BorderTopStyle { get; set; }
+
+        [JsonProperty("borderTopColor")]
+        public string BorderTopColor { get; set; }
+
+        [JsonProperty("borderBottomStyle")]
+        public int? BorderBottomStyle { get; set; }
+
+        [JsonProperty("borderBottomColor")]
+        public string BorderBottomColor { get; set; }
+
+        [JsonProperty("borderLeftStyle")]
+        public int? BorderLeftStyle { get; set; }
+
+        [JsonProperty("borderLeftColor")]
+        public string BorderLeftColor { get; set; }
+
+        [JsonProperty("borderRightStyle")]
+        public int? BorderRightStyle { get; set; }
+
+        [JsonProperty("borderRightColor")]
+        public string BorderRightColor { get; set; }
+
+        [JsonProperty("borderDiagonalStyle")]
+        public int? BorderDiagonalStyle { get; set; }
+
+        [JsonProperty("borderDiagonalColor")]
+        public string BorderDiagonalColor { get; set; }
+
+        [JsonProperty("borderDiagonalUp")]
+        public bool? BorderDiagonalUp { get; set; }
+
+        [JsonProperty("borderDiagonalDown")]
+        public bool? BorderDiagonalDown { get; set; }
     }
 }
