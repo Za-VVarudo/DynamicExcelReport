@@ -3,7 +3,14 @@
 namespace DER.Utility.Models
 {
     public class WorkbookModel : Dictionary<string, SheetModel> { }
-    public class SheetModel : Dictionary<string, CellDataModel> { }
+    public class SheetModel {
+        [JsonProperty("columnWidths")]
+        public Dictionary<int, double> ColumnWidths { get; set; }
+        [JsonProperty("rowHeights")]
+        public Dictionary<int, double> RowHeights { get; set; }
+        [JsonProperty("cells")]
+        public Dictionary<string, CellDataModel> Cells { get; set; }
+    }
 
     public class CellDataModel
     {

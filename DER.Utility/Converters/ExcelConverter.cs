@@ -12,6 +12,8 @@ namespace DER.Utility.Converters
             Formatting = Formatting.None,
             NullValueHandling = NullValueHandling.Ignore
         };
+        private const XLCellsUsedOptions DefaultCellsUsedOptions = XLCellsUsedOptions.AllContents | XLCellsUsedOptions.MergedRanges | XLCellsUsedOptions.NormalFormats;
+
         public static string ExcelToJson(FileStream stream)
         {
             var workbookData = new WorkbookModel();
@@ -20,10 +22,26 @@ namespace DER.Utility.Converters
                 var themes = workbook.Theme;
                 foreach (var ws in workbook.Worksheets)
                 {
-                    var sheetData = new SheetModel();
-                    var mergedMap = ws.MergedRanges.ToDictionary(e => e.RangeAddress.FirstAddress, e => e.RangeAddress.ToString());
-                    foreach (var cell in ws.CellsUsed())
+                    var table = ws.Tables;
+                    var sheetData = new SheetModel
                     {
+                        Cells = [],
+                        ColumnWidths = [],
+                        RowHeights = []
+                    };
+                    HashSet<string> mergedRanges = [];
+                    foreach (var cell in ws.CellsUsed(DefaultCellsUsedOptions))
+                    {
+                        var mergedRange = cell.MergedRange()?.RangeAddress.ToString();
+                        if (!string.IsNullOrEmpty(mergedRange) && !mergedRanges.Add(mergedRange))
+                        {
+                            continue;
+                        }
+                        var column = cell.WorksheetColumn();
+                        var row = cell.WorksheetRow();
+                        sheetData.ColumnWidths.TryAdd(column.ColumnNumber(), column.Width);
+                        sheetData.RowHeights.TryAdd(row.RowNumber(), row.Height);
+
                         var cellAddress = cell.Address.ToString();
                         var value = cell.GetFormattedString();
 
@@ -34,7 +52,7 @@ namespace DER.Utility.Converters
                         var cellInfo = new CellDataModel
                         {
                             Value = value,
-                            MergedRange = mergedMap.TryGetValue(cell.Address, out var mergeRange) ? mergeRange.ToString() : null,
+                            MergedRange = mergedRange,
                             FontName = style.Font.FontName,
                             FontSize = style.Font.FontSize,
                             Bold = style.Font.Bold,
@@ -57,8 +75,8 @@ namespace DER.Utility.Converters
                             BorderRightColor = ToArgbHex(border.RightBorderColor, themes),
                             BorderDiagonalStyle = border.DiagonalBorder != XLBorderStyleValues.None ? (int)border.DiagonalBorder : null,
                             BorderDiagonalColor = ToArgbHex(border.DiagonalBorderColor, themes),
-                            BorderDiagonalUp = border.DiagonalUp,
-                            BorderDiagonalDown = border.DiagonalDown
+                            BorderDiagonalUp = border.DiagonalUp ? border.DiagonalUp : null,
+                            BorderDiagonalDown = border.DiagonalDown ? border.DiagonalDown : null
                         };
 
                         var hasFill = !string.IsNullOrEmpty(cellInfo.FillForegroundColor) || !string.IsNullOrEmpty(cellInfo.FillBackgroundColor);
@@ -66,9 +84,8 @@ namespace DER.Utility.Converters
 
                         if (!string.IsNullOrEmpty(value) || !string.IsNullOrEmpty(cellInfo.MergedRange) || hasFill || hasBorders)
                         {
-                            sheetData[cellAddress] = cellInfo;
+                            sheetData.Cells[cellAddress] = cellInfo;
                         }
-                        sheetData[cellAddress] = cellInfo;
                     }
                     workbookData[ws.Name] = sheetData;
                 }
@@ -86,10 +103,8 @@ namespace DER.Utility.Converters
             foreach (var sheetData in excelTemplate)
             {
                 var ws = workbook.Worksheets.Add(sheetData.Key);
-
                 var mergesToApply = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-                foreach (var cellData in sheetData.Value)
+                foreach (var cellData in sheetData.Value.Cells)
                 {
                     var cellAddress = cellData.Key;
                     var cellInfo = cellData.Value;
@@ -103,7 +118,7 @@ namespace DER.Utility.Converters
                     }
 
                     // Apply styling using flattened model
-                    ApplyStyle(cell, cellInfo);
+                    ApplyStyle(cell.Style, cellInfo);
 
                     // Handle merged cells (only add once per range)
                     if (!string.IsNullOrEmpty(cellInfo.MergedRange))
@@ -111,19 +126,27 @@ namespace DER.Utility.Converters
                         if (mergesToApply.Add(cellInfo.MergedRange))
                         {
                             var range = ws.Range(cellInfo.MergedRange);
+                            ApplyStyle(range.Style, cellInfo);
                             range.Merge();
                         }
                     }
+                }
+
+                foreach (var columnWidth in sheetData.Value.ColumnWidths)
+                {
+                    ws.Column(columnWidth.Key).Width = columnWidth.Value;
+                }
+                foreach (var rowHeight in sheetData.Value.RowHeights)
+                {
+                    ws.Row(rowHeight.Key).Height = rowHeight.Value;
                 }
             }
 
             workbook.SaveAs(outputPath);
         }
 
-        private static void ApplyStyle(IXLCell cell, CellDataModel style)
+        private static void ApplyStyle(IXLStyle cellStyle, CellDataModel style)
         {
-            var cellStyle = cell.Style;
-
             if (!string.IsNullOrEmpty(style.FontName)) cellStyle.Font.FontName = style.FontName;
             if (style.FontSize > 0) cellStyle.Font.FontSize = style.FontSize;
             cellStyle.Font.Bold = style.Bold;
@@ -158,7 +181,7 @@ namespace DER.Utility.Converters
             }
 
             // Borders per side
-            if (style.BorderTopStyle.HasValue && style.BorderTopStyle.Value != (int)XLBorderStyleValues.None)
+            if (style.BorderTopStyle.HasValue)
             {
                 cellStyle.Border.TopBorder = (XLBorderStyleValues)style.BorderTopStyle.Value;
                 if (!string.IsNullOrEmpty(style.BorderTopColor))
@@ -166,7 +189,7 @@ namespace DER.Utility.Converters
                     cellStyle.Border.TopBorderColor = XLColor.FromHtml(style.BorderTopColor);
                 }
             }
-            if (style.BorderBottomStyle.HasValue && style.BorderBottomStyle.Value != (int)XLBorderStyleValues.None)
+            if (style.BorderBottomStyle.HasValue)
             {
                 cellStyle.Border.BottomBorder = (XLBorderStyleValues)style.BorderBottomStyle.Value;
                 if (!string.IsNullOrEmpty(style.BorderBottomColor))
@@ -174,7 +197,7 @@ namespace DER.Utility.Converters
                     cellStyle.Border.BottomBorderColor = XLColor.FromHtml(style.BorderBottomColor);
                 }
             }
-            if (style.BorderLeftStyle.HasValue && style.BorderLeftStyle.Value != (int)XLBorderStyleValues.None)
+            if (style.BorderLeftStyle.HasValue)
             {
                 cellStyle.Border.LeftBorder = (XLBorderStyleValues)style.BorderLeftStyle.Value;
                 if (!string.IsNullOrEmpty(style.BorderLeftColor))
@@ -182,7 +205,7 @@ namespace DER.Utility.Converters
                     cellStyle.Border.LeftBorderColor = XLColor.FromHtml(style.BorderLeftColor);
                 }
             }
-            if (style.BorderRightStyle.HasValue && style.BorderRightStyle.Value != (int)XLBorderStyleValues.None)
+            if (style.BorderRightStyle.HasValue)
             {
                 cellStyle.Border.RightBorder = (XLBorderStyleValues)style.BorderRightStyle.Value;
                 if (!string.IsNullOrEmpty(style.BorderRightColor))
@@ -190,10 +213,10 @@ namespace DER.Utility.Converters
                     cellStyle.Border.RightBorderColor = XLColor.FromHtml(style.BorderRightColor);
                 }
             }
-            if (style.BorderDiagonalStyle.HasValue && style.BorderDiagonalStyle.Value != (int)XLBorderStyleValues.None)
+            if (style.BorderDiagonalStyle.HasValue)
             {
-                cellStyle.Border.DiagonalUp = style.BorderDiagonalUp.Value;
-                cellStyle.Border.DiagonalDown = style.BorderDiagonalDown.Value;
+                cellStyle.Border.DiagonalUp = style.BorderDiagonalUp ?? false;
+                cellStyle.Border.DiagonalDown = style.BorderDiagonalDown ?? false;
                 cellStyle.Border.DiagonalBorder = (XLBorderStyleValues)style.BorderDiagonalStyle.Value;
                 if (!string.IsNullOrEmpty(style.BorderDiagonalColor))
                 {
@@ -220,7 +243,7 @@ namespace DER.Utility.Converters
                 default:
                     return null;
             }
-            return ColorHelpers.ToRGBA(color.Color.A, color.Color.R, color.Color.G, color.Color.B, tint); ;
+            return ColorHelpers.ApplyTint(color.Color, tint); ;
         }
     }
 }
